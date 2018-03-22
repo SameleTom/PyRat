@@ -1,6 +1,8 @@
 # PyRat
 
 PyRat，基于python XmlRPC完成的远控开源项目，包括客户端和服务端（也叫控制端，后统称服务端）。
+原地址：https://github.com/anhkgg/PyRat
+
 
 > 申明：项目仅供技术交流，请勿用于商业及非法用途，如产生任何法律纠纷均与本人无关!
 
@@ -198,7 +200,3 @@ cmd >test-3333333 do terminate(212) name notepad.exe True
 1. 测试中发现可能有编码问题
 
 如果客户端运行在linux，而服务端在windows平台，中文可能出现乱码，因为两个平台使用编码不同，暂时未作处理
-
-# 捐助
-
-![img](wechatpay.png)

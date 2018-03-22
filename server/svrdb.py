@@ -1,13 +1,20 @@
 #! /usr/bin/env python
 #coding=utf-8
-
+"""
+db 操作表
+"""
 import sqlite3
 
 class SvrDb():
     def __init__(self, path):
-        pass
         #sqlite3.__doc__
         #SQLite objects created in a thread can only be used in that same thread.
+        """
+        创建两个表
+        1.client 记录客户端信息
+        2.记录任务信息
+        :param path:
+        """
         self.conn = sqlite3.connect(path, check_same_thread = False)
         sql = 'CREATE TABLE if not exists client(' \
               'c_id INTEGER PRIMARY KEY AUTOINCREMENT,' \
@@ -37,6 +44,14 @@ class SvrDb():
 
     #id = computer_name_time
     def add_client(self, id, ver, info):
+        """
+        添加新任务
+        :param id:
+        :param ver:
+        :param info:
+        :return:
+        """
+        # id 存在 更新就好了
         if self.get_client(id):
             self.upd_client(id, 
                             ver, 
@@ -48,6 +63,7 @@ class SvrDb():
             #print '<add_client> already exist'
             return
 
+        # id 不存在 插入新的
         sql = "insert into client(" \
               "c_cid, c_ver, c_localip, c_remoteip, " \
               "c_username, c_osver, c_firsttime," \
@@ -61,6 +77,11 @@ class SvrDb():
             print '<add_client>', e
     
     def get_client(self, id):
+        """
+        根据id获取信息
+        :param id:
+        :return:
+        """
         sql = "select * from client where c_cid = '%s'" % id
         try:
             cursor = self.conn.execute(sql)
@@ -71,6 +92,10 @@ class SvrDb():
         return None
     
     def list_client(self):
+        """
+        查询client全部信息
+        :return:
+        """
         sql = "select * from client;"
         try:
             cursor = self.conn.execute(sql)
@@ -81,6 +106,10 @@ class SvrDb():
         return None
 
     def list_alive_client(self):
+        """
+        查看存活的机器
+        :return:
+        """
         sql = "select * from client where c_status=1;"
         try:
             cursor = self.conn.execute(sql)
@@ -91,6 +120,11 @@ class SvrDb():
         return None
 
     def del_client(self, id):
+        """
+        删掉一个机器
+        :param id:
+        :return:
+        """
         sql = "delete from client where c_cid='%s'" % id
         try:
             self.conn.execute(sql)
@@ -99,6 +133,10 @@ class SvrDb():
             print '<del_client>', e
     
     def del_all_client(self):
+        """
+        删掉全部信息
+        :return:
+        """
         sql = 'delete from client;'
         try:
             self.conn.execute(sql)
@@ -107,6 +145,17 @@ class SvrDb():
             print '<del_all_client>', e
 
     def upd_client(self, id, ver='', lip='', rip='', uname='', osv='', status=-1):
+        """
+        更新一个机器信息
+        :param id:
+        :param ver:
+        :param lip:
+        :param rip:
+        :param uname:
+        :param osv:
+        :param status:
+        :return:
+        """
         sql = 'update client set '
         sql += (('c_ver=\'%s\',' % ver) if ver else '')
         sql += (('c_localip=\'%s\',' % lip) if lip else '')
@@ -123,6 +172,11 @@ class SvrDb():
             print '<upd_client>', e
 
     def off_client(self, id):
+        """
+        下线机器
+        :param id:
+        :return:
+        """
         sql = 'update client set c_status = 0'
         try:
             self.conn.execute(sql)
@@ -134,6 +188,13 @@ class SvrDb():
         self.conn.close()
 
     def add_task(self, id, task, argv=''):
+        """
+        建立一个任务
+        :param id:
+        :param task:
+        :param argv:
+        :return:
+        """
         if not self.get_client(id):
             print '<add_task> %s is not exist' % id
             return
@@ -146,6 +207,11 @@ class SvrDb():
             print '<add_task>', e
 
     def get_task(self, id):
+        """
+        获取一个任务
+        :param id:
+        :return:
+        """
         sql = "select * from task where t_cid='%s' limit 1;" % id
         try:
             cursor = self.conn.execute(sql)
@@ -155,6 +221,11 @@ class SvrDb():
         return None
     
     def del_task(self, tid):
+        """
+        删除任务 by tid
+        :param tid:
+        :return:
+        """
         sql = "delete from task where t_id=%d" % tid
         try:
             self.conn.execute(sql)
@@ -163,6 +234,11 @@ class SvrDb():
             print '<del_task>', e
 
     def clean_task(self, id):
+        """
+        删除任务by id
+        :param id:
+        :return:
+        """
         sql = "delete from task where t_cid='%s'" % id
         try:
             self.conn.execute(sql)
