@@ -249,7 +249,8 @@ class SvrDb():
 if __name__ == '__main__':
     sd = SvrDb("svr.db")
 
-    '''
+
+    """
     id = 'myhost_1520264904.385'
     ver = '1.0'
     info = {
@@ -267,9 +268,9 @@ if __name__ == '__main__':
     print sd.get_task(id)
     tid=raw_input("tid >")
     sd.del_task(int(tid))
-    '''
+    """
 
     c = sd.list_alive_client()
     for i in c:
-        print i
+        print i[1]
     sd.close()

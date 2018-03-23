@@ -33,6 +33,12 @@ class SvrMethod():
         self.tsk.new_cmd()
 
     def get_task(self, id):
+        """
+        客户端执行该函数 更新agent信息
+        并在数据库中拿出要执行的任务
+        :param id:
+        :return:
+        """
         # 更新agent 信息 这里会更新agent的lasttime 用于判断机器是不是存在
         self.db.upd_client(id)
 
@@ -165,6 +171,10 @@ class SvrTask(threading.Thread):
         sys.stdout.flush()
 
     def list_client(self):
+        """
+        列出全部agent
+        :return:
+        """
         self.check_client(True)
         c = self.db.list_client()
         if c:
@@ -188,6 +198,10 @@ class SvrTask(threading.Thread):
             print 'no client'
 
     def list_alive_client(self):
+        """
+        列出存活agent
+        :return:
+        """
         self.check_client(True)
         c = self.db.list_alive_client()
         if c:
@@ -219,10 +233,18 @@ class SvrTask(threading.Thread):
             print 'Please type a target to delete'
             return
         if target == 'ALL':
+            c = self.db.list_alive_client()
+            for i in c:
+                # 任务中加入卸载任务
+                self.db.add_task(i[1], 'uninstall', '')
+
+            # 数据中卸载任务
             self.db.del_all_client()
+
         else:
             r = raw_input("Do you want to uninstall client?(Y/N)").strip()
             if r == 'Y':
+                # 任务中加入卸载任务
                 self.db.add_task(target, 'uninstall', '')
             else:
                 self.db.del_client(target)
